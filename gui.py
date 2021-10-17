@@ -39,7 +39,7 @@ def detect():
         
         cv2.putText(image1,"Mode:",(780,760),cv2.FONT_HERSHEY_TRIPLEX,1,(255,255,255),2,cv2.LINE_AA)
         #cv2.putText(image1,"Normal",(780,820),cv2.FONT_HERSHEY_TRIPLEX,1,(255,255,255),2,cv2.LINE_AA)
-        cv2.putText(image1,"Direction:",(200,780),cv2.FONT_HERSHEY_TRIPLEX,1,(255,255,255),2,cv2.LINE_AA)
+        cv2.putText(image1,"Soldier:",(200,780),cv2.FONT_HERSHEY_TRIPLEX,1,(255,255,255),2,cv2.LINE_AA)
         #cv2.putText(image1,mod,(200,820),cv2.FONT_HERSHEY_TRIPLEX,1,(255,255,255),1,cv2.LINE_AA)
         cv2.putText(image1,"Objects Detected:",(1200,130),cv2.FONT_HERSHEY_TRIPLEX,1,(255,255,255),2,cv2.LINE_AA)
         cv2.putText(image1,"GPS Coordinates:",(1160,770),cv2.FONT_HERSHEY_TRIPLEX,0.8,(255,255,255),2,cv2.LINE_AA)

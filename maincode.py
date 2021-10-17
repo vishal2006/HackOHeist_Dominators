@@ -12,14 +12,15 @@ from tkinter import *
 from PIL import ImageTk, Image
 import ctypes
 from tkinter import messagebox
-
+import pygame
+pygame.mixer.init()
+pygame.mixer.music.load("M416.wav")
 import RPi.GPIO as GPIO
 GPIO.setwarnings(False)
 
 #----------------------------------------------------------------------------------------------------------------
 
 ### Initialized variables
-
 cap = cv2.VideoCapture(0)
 
 
@@ -141,6 +142,8 @@ def detect():
             interpreter.set_tensor(input_details[0]['index'],input_data)
             interpreter.invoke()
 
+            body_cascade = cv2.CascadeClassifier('cascade.xml')
+
             boxes = interpreter.get_tensor(output_details[0]['index'])[0] 
             classes = interpreter.get_tensor(output_details[1]['index'])[0] 
             scores = interpreter.get_tensor(output_details[2]['index'])[0]
@@ -156,6 +159,7 @@ def detect():
                         cv2.rectangle(frame, (xmin,ymin), (xmax,ymax), (10, 255, 0), 2)
 
                         if (int(classes[0]) == 0.0):
+                            pygame.mixer.music.play()
                             object_name = labels[int(classes[i])] 
                             label = '%s: %d%%' % (object_name, int(scores[i]*100)) 
                             labelSize, baseLine = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.7, 2) 
@@ -220,15 +224,22 @@ def detect():
             
             image1[130:130+framecamera.shape[0],120:120+framecamera.shape[1]] = framecamera
             
-            cv2.putText(image1,"Mode:",(780,760),cv2.FONT_HERSHEY_TRIPLEX,1,(255,255,255),2,cv2.LINE_AA)
+            cv2.putText(image1,"State:",(780,760),cv2.FONT_HERSHEY_TRIPLEX,1,(255,255,255),2,cv2.LINE_AA)
             cv2.putText(image1,"Normal",(780,820),cv2.FONT_HERSHEY_TRIPLEX,1,(255,255,255),2,cv2.LINE_AA)
-            cv2.putText(image1,"Direction",(200,780),cv2.FONT_HERSHEY_TRIPLEX,1,(255,255,255),2,cv2.LINE_AA)
-            cv2.putText(image1,"Rest",(200,820),cv2.FONT_HERSHEY_TRIPLEX,1,(255,255,255),1,cv2.LINE_AA)
+            cv2.putText(image1,"Soldier",(200,780),cv2.FONT_HERSHEY_TRIPLEX,1,(255,255,255),2,cv2.LINE_AA)
             cv2.putText(image1,"Objects Detected:",(1200,130),cv2.FONT_HERSHEY_TRIPLEX,1,(255,255,255),2,cv2.LINE_AA)
             cv2.putText(image1,"GPS Coordiantes:",(1160,770),cv2.FONT_HERSHEY_TRIPLEX,0.8,(255,255,255),2,cv2.LINE_AA)
             cv2.putText(image1,"19.0759899 72.8773928",(1160,800),cv2.FONT_HERSHEY_TRIPLEX,0.5,(255,255,255),1,cv2.LINE_AA)
             
-            
+            gray = cv2.cvtColor(image1, cv2.COLOR_BGR2GRAY)
+            body = body_cascade.detectMultiScale(gray)
+
+            if body:
+                cv2.putText(image1,"Rest",(200,820),cv2.FONT_HERSHEY_TRIPLEX,1,(255,255,255),1,cv2.LINE_AA)
+
+            for (x,y,w,h) in body:
+                cv2.rectangle(image1,(x,y),(x+w,y+h),(255,0,0),2)
+
             for j in range(len(scores)):
                 if ((scores[j] > min_conf_threshold) and (scores[j] <= 1.0)):
                     cv2.putText(image1,labels[int(classes[j])],(1280,(190+(j*40))),cv2.FONT_HERSHEY_COMPLEX_SMALL,1,(255,255,255),2,cv2.LINE_AA)

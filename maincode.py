@@ -292,12 +292,8 @@ entry2.place(x=600,y=400)
 
 root.mainloop()
 
-GPIO.output(a,GPIO.LOW)
-GPIO.output(b,GPIO.LOW)
-GPIO.output(c,GPIO.LOW)
-GPIO.output(d,GPIO.HIGH)
-
 cv2.destroyAllWindows()
+cap.release()
 GPIO.output(a,GPIO.LOW)
 GPIO.output(b,GPIO.HIGH)
 GPIO.output(c,GPIO.HIGH)

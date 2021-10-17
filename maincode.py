@@ -13,12 +13,27 @@ from PIL import ImageTk, Image
 import ctypes
 from tkinter import messagebox
 
+import RPi.GPIO as GPIO
+GPIO.setwarnings(False)
 
 #----------------------------------------------------------------------------------------------------------------
 
 ### Initialized variables
 
 cap = cv2.VideoCapture(0)
+
+
+a = 6
+b = 13
+c = 19
+d = 26
+
+GPIO.setmode(GPIO.BCM)
+
+GPIO.setup(a,GPIO.OUT)
+GPIO.setup(b,GPIO.OUT)
+GPIO.setup(c,GPIO.OUT)
+GPIO.setup(d,GPIO.OUT)
 
 ### Arguement parsing
 
@@ -94,7 +109,7 @@ freq = cv2.getTickFrequency()
 #----------------------------------------------------------------------------------------------------------------
 # Functions
 
-def login(entry1,entry2,root):
+def login():
     if entry1.get()=="" or entry2.get()=="":
         messagebox.showerror("Error","All fields are required",parent=root)
     
@@ -105,41 +120,6 @@ def login(entry1,entry2,root):
         root.destroy()
         detect()
 
-
-def gui():
-
-    root = Tk()
-    root.title("Surveillance System")
-    root.geometry("1200x675")
-    root.minsize(1200,675)
-    root.maxsize(1200,675)
-
-    bg = ImageTk.PhotoImage(file="src\\bg.png")
-
-
-    my_canvas = Canvas(root, width=1200, height=675)
-    my_canvas.pack(fill="both",expand=True)
-
-    my_canvas.create_image(0,0, image=bg,anchor="nw")
-
-    text1 = my_canvas.create_text(700,100,fill="RoyalBlue1",font=("Segoe UI", 45, "bold"),text="Login Page")
-    text2 = my_canvas.create_text(650,280,fill="white",font=("Segoe UI", 15, "bold"),text="Username")
-    test3 = my_canvas.create_text(650,380,fill="white",font=("Segoe UI", 15, "bold"),text="Password")
-
- 
-    entry1 = Entry(root,font=("Calibri 18 bold"),justify="center",bg="white",fg="black",borderwidth=2,width=25)
-    entry2 = Entry(root,font=("Calibri 18 bold"),justify="center",bg="white",fg="black",borderwidth=2,width=25,show="*")
-
-    my_button = Button(root,text="LOGIN",font=("Segoe UI", 18," bold"),command=login(entry1,entry2,root),width=10,fg="white",bg="RoyalBlue1",relief=GROOVE,activebackground="lightblue")
-
-    window1 = my_canvas.create_window(650,325,window=entry1)
-    window2 = my_canvas.create_window(650,400,window=entry2)
-
-    my_button.place(x=690,y=500)
-    entry1.place(x=600,y=300)
-    entry2.place(x=600,y=400)
-
-    root.mainloop()
 
 
 
@@ -175,32 +155,87 @@ def detect():
                         
                         cv2.rectangle(frame, (xmin,ymin), (xmax,ymax), (10, 255, 0), 2)
 
-                        object_name = labels[int(classes[i])] 
-                        label = '%s: %d%%' % (object_name, int(scores[i]*100)) 
-                        labelSize, baseLine = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.7, 2) 
-                        label_ymin = max(ymin, labelSize[1] + 10) 
-                        cv2.rectangle(frame, (xmin, label_ymin-labelSize[1]-10), (xmin+labelSize[0], label_ymin+baseLine-10), (255, 255, 255), cv2.FILLED) 
-                        cv2.putText(frame, label, (xmin, label_ymin-7), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 0), 2) 
+                        if (int(classes[0]) == 0.0):
+                            object_name = labels[int(classes[i])] 
+                            label = '%s: %d%%' % (object_name, int(scores[i]*100)) 
+                            labelSize, baseLine = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.7, 2) 
+                            label_ymin = max(ymin, labelSize[1] + 10) 
+                            cv2.rectangle(frame, (xmin, label_ymin-labelSize[1]-10), (xmin+labelSize[0], label_ymin+baseLine-10), (255, 255, 255), cv2.FILLED) 
+                            cv2.putText(frame, label, (xmin, label_ymin-7), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 0), 2) 
+
+                            xc = int(xmin+((xmax-xmin)/2))
+                            yc = int(ymin+((ymax-ymin)/2))
+                            cv2.circle(frame,(xc,yc), 10, (0,0,180), -1)
+
+                            fxc, fyc = (frame.shape[1])/2,(frame.shape[0])/2
+                            disx, disy = (xc - fxc),(yc-fyc)
+                            
+                            print("disx: ",disx,"disy: ",disy)
+                            print("xc: ",xc,"yc: ",yc)
+                            
+                            if disx  >= 1:
+                                GPIO.output(a,GPIO.LOW)
+                                GPIO.output(b,GPIO.HIGH)
+                                GPIO.output(c,GPIO.LOW)
+                                GPIO.output(d,GPIO.LOW)
+                                time.sleep(2)
+                                
+                            elif disx  <0:
+                                GPIO.output(a,GPIO.HIGH)
+                                GPIO.output(b,GPIO.LOW)
+                                GPIO.output(c,GPIO.LOW)
+                                GPIO.output(d,GPIO.LOW)
+                                time.sleep(2)
+                            
+                            if disy >= 1:
+                                GPIO.output(a,GPIO.LOW)
+                                GPIO.output(b,GPIO.LOW)
+                                GPIO.output(c,GPIO.HIGH)
+                                GPIO.output(d,GPIO.LOW)
+                                time.sleep(2)
+                                
+                            elif disy <0:
+                                GPIO.output(a,GPIO.HIGH)
+                                GPIO.output(b,GPIO.HIGH)
+                                GPIO.output(c,GPIO.LOW)
+                                GPIO.output(d,GPIO.LOW)
+                                time.sleep(2)
+                                
+                            if disx <=5 and disy <=5:
+                                GPIO.output(a,GPIO.LOW)
+                                GPIO.output(b,GPIO.LOW)
+                                GPIO.output(c,GPIO.LOW)
+                                GPIO.output(d,GPIO.LOW)
+                        
+                            
 
             
             frame2 = frame.copy()
             frame_rgb = cv2.cvtColor(frame2, cv2.COLOR_BGR2RGB)
             frame_resized = cv2.resize(frame_rgb, (1280,720))
             input_data = np.expand_dims(frame_resized, axis=0)
-            bgui = cv2.imread("src\\bgui.jpg")
+            bgui = cv2.imread("bgui.jpg")
             image1 = cv2.resize(bgui, (1600, 900))
             framecamera = cv2.resize(frame2, (878, 456))
             
             image1[130:130+framecamera.shape[0],120:120+framecamera.shape[1]] = framecamera
             
-            cv2.putText(image1,"State:",(780,760),cv2.FONT_HERSHEY_TRIPLEX,1,(255,255,255),2,cv2.LINE_AA)
+            cv2.putText(image1,"Mode:",(780,760),cv2.FONT_HERSHEY_TRIPLEX,1,(255,255,255),2,cv2.LINE_AA)
             cv2.putText(image1,"Normal",(780,820),cv2.FONT_HERSHEY_TRIPLEX,1,(255,255,255),2,cv2.LINE_AA)
-            cv2.putText(image1,"Soldier:",(200,780),cv2.FONT_HERSHEY_TRIPLEX,1,(255,255,255),2,cv2.LINE_AA)
-            cv2.putText(image1,"False",(200,820),cv2.FONT_HERSHEY_TRIPLEX,1,(255,255,255),1,cv2.LINE_AA)
+            cv2.putText(image1,"Direction",(200,780),cv2.FONT_HERSHEY_TRIPLEX,1,(255,255,255),2,cv2.LINE_AA)
+            cv2.putText(image1,"Rest",(200,820),cv2.FONT_HERSHEY_TRIPLEX,1,(255,255,255),1,cv2.LINE_AA)
             cv2.putText(image1,"Objects Detected:",(1200,130),cv2.FONT_HERSHEY_TRIPLEX,1,(255,255,255),2,cv2.LINE_AA)
-            cv2.putText(image1,"GPS Coordinates:",(1160,770),cv2.FONT_HERSHEY_TRIPLEX,0.8,(255,255,255),2,cv2.LINE_AA)
-            cv2.putText(image1,"21° 2' 27.528'' N 75° 3' 26.748'' E",(1160,800),cv2.FONT_HERSHEY_TRIPLEX,0.5,(255,255,255),1,cv2.LINE_AA)
+            cv2.putText(image1,"GPS Coordiantes:",(1160,770),cv2.FONT_HERSHEY_TRIPLEX,0.8,(255,255,255),2,cv2.LINE_AA)
+            cv2.putText(image1,"19.0759899 72.8773928",(1160,800),cv2.FONT_HERSHEY_TRIPLEX,0.5,(255,255,255),1,cv2.LINE_AA)
+            
+            
+            for j in range(len(scores)):
+                if ((scores[j] > min_conf_threshold) and (scores[j] <= 1.0)):
+                    cv2.putText(image1,labels[int(classes[j])],(1280,(190+(j*40))),cv2.FONT_HERSHEY_COMPLEX_SMALL,1,(255,255,255),2,cv2.LINE_AA)
+                    
             image1 = cv2.resize(image1, (1200, 700))
+
+            
             cv2.imshow('Survelliance System', image1)
 
             if cv2.waitKey(25) & 0xFF == ord('q'):
@@ -212,10 +247,51 @@ def detect():
 
 ### Main
 
-gui()
 
-cap.release()
+root = Tk()
+root.title("Surveillance System")
+root.geometry("1200x675")
+root.minsize(1200,675)
+root.maxsize(1200,675)
+
+bg = ImageTk.PhotoImage(file="bg.png")
+
+
+my_canvas = Canvas(root, width=1200, height=675)
+my_canvas.pack(fill="both",expand=True)
+
+my_canvas.create_image(0,0, image=bg,anchor="nw")
+
+text1 = my_canvas.create_text(700,100,fill="RoyalBlue1",font=("Segoe UI", 45, "bold"),text="Login Page")
+text2 = my_canvas.create_text(650,280,fill="white",font=("Segoe UI", 15, "bold"),text="Username")
+test3 = my_canvas.create_text(650,380,fill="white",font=("Segoe UI", 15, "bold"),text="Password")
+
+ 
+entry1 = Entry(root,font=("Calibri 18 bold"),justify="center",bg="white",fg="black",borderwidth=2,width=25)
+entry2 = Entry(root,font=("Calibri 18 bold"),justify="center",bg="white",fg="black",borderwidth=2,width=25,show="*")
+
+my_button = Button(root,text="LOGIN",font=("Segoe UI", 18," bold"),command=login,width=10,fg="white",bg="RoyalBlue1",relief=GROOVE,activebackground="lightblue")
+
+window1 = my_canvas.create_window(650,325,window=entry1)
+window2 = my_canvas.create_window(650,400,window=entry2)
+
+my_button.place(x=690,y=500)
+entry1.place(x=600,y=300)
+entry2.place(x=600,y=400)
+
+root.mainloop()
+
+GPIO.output(a,GPIO.LOW)
+GPIO.output(b,GPIO.LOW)
+GPIO.output(c,GPIO.LOW)
+GPIO.output(d,GPIO.HIGH)
+
 cv2.destroyAllWindows()
+GPIO.output(a,GPIO.LOW)
+GPIO.output(b,GPIO.HIGH)
+GPIO.output(c,GPIO.HIGH)
+GPIO.output(d,GPIO.LOW)
+GPIO.cleanup()
 
 
 
